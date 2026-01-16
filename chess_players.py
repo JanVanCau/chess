@@ -232,50 +232,46 @@ class thinking_one_ahead_player:
                 if ch_mt:
                     if self.verbose:
                         print(f"\n{self.kleur} staat schaakmat.")
-                        self.status = 0
-                        return bord, self.status
-                    else:
-                        zetten_score = [
-                            item
-                            for item in zetten_score
-                            if [item[0], item[1]] in oplossingen
-                        ]
-
-                m = max([item[2] for item in zetten_score])
-                beste_zetten = [item for item in zetten_score if item[2] == m]
-
-                if m == 6:
-                    zet = random.choice(beste_zetten)
-                    bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
-
+                    self.status = 0
+                    return bord, self.status
                 else:
-                    change_color_map = {"zwart": "wit", "wit": "zwart"}
-                    zetten_nettoscore = []
-
-                    for zet in zetten_score:
-                        bord_v = doe_zet(
-                            bord, self.kleur, zet[0], zet[1], controle=False
-                        )
-                        tegenzetten_score = alle_geldige_zetten_score(
-                            bord_v, change_color_map[self.kleur]
-                        )
-
-                        if tegenzetten_score:
-                            tegenscore = max([item[2] for item in tegenzetten_score])
-                        else:
-                            tegenscore = -7
-
-                        zetten_nettoscore.append([zet[0], zet[1], zet[2] - tegenscore])
-
-                    m_n = max([item[2] for item in zetten_nettoscore])
-                    beste_zetten = [
-                        [item[0], item[1]]
-                        for item in zetten_nettoscore
-                        if item[2] == m_n
+                    zetten_score = [
+                        item
+                        for item in zetten_score
+                        if [item[0], item[1]] in oplossingen
                     ]
 
-                    zet = random.choice(beste_zetten)
-                    bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
+        m = max([item[2] for item in zetten_score])
+        beste_zetten = [item for item in zetten_score if item[2] == m]
+
+        if m == 6:
+            zet = random.choice(beste_zetten)
+            bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
+
+        else:
+            change_color_map = {"zwart": "wit", "wit": "zwart"}
+            zetten_nettoscore = []
+
+            for zet in zetten_score:
+                bord_v = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
+                tegenzetten_score = alle_geldige_zetten_score(
+                    bord_v, change_color_map[self.kleur]
+                )
+
+                if tegenzetten_score:
+                    tegenscore = max([item[2] for item in tegenzetten_score])
+                else:
+                    tegenscore = -7
+
+                zetten_nettoscore.append([zet[0], zet[1], zet[2] - tegenscore])
+
+            m_n = max([item[2] for item in zetten_nettoscore])
+            beste_zetten = [
+                [item[0], item[1]] for item in zetten_nettoscore if item[2] == m_n
+            ]
+
+            zet = random.choice(beste_zetten)
+            bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
 
         return bord, self.status
 

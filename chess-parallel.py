@@ -11,9 +11,9 @@ from chess_players import (
     thinking_two_ahead_player_conservative,
 )
 
-speler_1 = thinking_two_ahead_player_conservative
-speler_2 = thinking_one_ahead_player
-N_games = 200
+speler_1 = thinking_one_ahead_player
+speler_2 = random_player
+N_games = 10_000
 workers = 12
 max_zetten = 300
 
