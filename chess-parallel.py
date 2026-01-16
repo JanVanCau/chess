@@ -6,14 +6,13 @@ from chess_base_functions import spel
 from chess_players import (
     random_player,
     score_player,
-    score_player_2,
     thinking_one_ahead_player,
     thinking_two_ahead_player_conservative,
 )
 
-speler_1 = thinking_two_ahead_player_conservative
+speler_1 = score_player
 speler_2 = thinking_one_ahead_player
-N_games = 200
+N_games = 10_000
 workers = 12
 max_zetten = 300
 

@@ -436,7 +436,7 @@ def checkmate(bord, kleur):
         return False, []
 
     else:
-        zetten = alle_geldige_zetten(bord, kleur)
+        status, zetten = alle_geldige_zetten(bord, kleur)
         oplossingen = []
 
         for z in zetten:
@@ -464,7 +464,7 @@ def alle_geldige_zetten(bord, kleur):
                 for zet in zetten:
                     bord_v = doe_zet(bord, kleur, [i, j], zet, controle=False)
                     check_v = check(bord_v, kleur)
-                    if not check_v:
+                    if not check_v:  # Je mag jezelf niet schaak zetten
                         geldige_zetten.append([[i, j], zet])
 
                 if bord[i][j][1] == "koning" and geldige_zetten_koning_rokade(
@@ -486,36 +486,71 @@ def alle_geldige_zetten(bord, kleur):
                         if not ch and not ch_v and not ch_v2:
                             geldige_zetten.append([[i, j], zet])
 
-    return geldige_zetten
+    if not geldige_zetten:
+        status = 4
+        return status, []
+
+    elif check(bord, kleur):
+        geldige_zetten_bis = []
+
+        for zet in geldige_zetten:
+            bord_v = doe_zet(bord, kleur, zet[0], zet[1], controle=False)
+            bedr_v = check(bord_v, kleur)
+            if not bedr_v:
+                geldige_zetten_bis.append(zet)
+
+        if not geldige_zetten_bis:
+            status = 3
+            return status, []
+
+        else:
+            status = 2
+            return status, geldige_zetten_bis
+
+    else:
+        status = 1
+        return status, geldige_zetten
+
+    # status 1 -> all good
+    # status 2 -> checked
+    # status 3 -> checkmate
+    # state 4 -> not checked but no moves possible
 
 
 def alle_geldige_zetten_score(bord, kleur):
     score_map = {0: 0, "pion": 1, "paard": 2, "toren": 3, "loper": 3, "koningin": 4}
     change_color_map = {"zwart": "wit", "wit": "zwart"}
 
-    geldige_zetten = alle_geldige_zetten(bord, kleur)
-    geldige_zetten_score = []
+    status, geldige_zetten = alle_geldige_zetten(bord, kleur)
 
-    for zet in geldige_zetten:
-        bord_v = doe_zet(bord, kleur, zet[0], zet[1], controle=False)
+    if status in [3, 4]:
+        return []
 
-        check_v_other = check(bord_v, change_color_map[kleur])
+    else:
+        geldige_zetten_score = []
+        for zet in geldige_zetten:
+            bord_v = doe_zet(bord, kleur, zet[0], zet[1], controle=False)
 
-        if check_v_other:
-            ch_mt, oplossingen = checkmate(bord_v, change_color_map[kleur])
+            status_v, geldige_zetten_v = alle_geldige_zetten(
+                bord_v, change_color_map[kleur]
+            )
 
-            if ch_mt:
-                geldige_zetten_score.append([zet[0], zet[1], 7])  # schaakmat
-                break
-            else:
+            if status_v in [3, 4]:
+                geldige_zetten_score.append(
+                    [zet[0], zet[1], 7]
+                )  # andere speler schaakmat of kan omwille van een andere reden geen geldige zet meer uitvoeren
+
+            elif status_v == 2:
                 score = 2 + score_map[bord[zet[1][0]][zet[1][1]][1]]
-                geldige_zetten_score.append([zet[0], zet[1], score])  # schaak
+                geldige_zetten_score.append(
+                    [zet[0], zet[1], score]
+                )  # andere speler staat schaak
 
-        else:
-            score = score_map[bord[zet[1][0]][zet[1][1]][1]]
-            geldige_zetten_score.append([zet[0], zet[1], score])
+            else:
+                score = score_map[bord[zet[1][0]][zet[1][1]][1]]
+                geldige_zetten_score.append([zet[0], zet[1], score])
 
-    return geldige_zetten_score
+        return geldige_zetten_score
 
 
 # ----------------------------------------------------------------------------
@@ -537,7 +572,7 @@ def doe_zet(bord, kleur, van, naar, controle=True):
     color_map_inv = {"wit": 3, "zwart": 1}
 
     if controle:
-        geldige_zetten = alle_geldige_zetten(bord, kleur)
+        status, geldige_zetten = alle_geldige_zetten(bord, kleur)
         if [van, naar] not in geldige_zetten:
             print("Ongeldige zet!")
             return bord

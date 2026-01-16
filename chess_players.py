@@ -7,7 +7,6 @@ from chess_base_functions import (
     doe_zet,
 )
 
-
 # ----------------------------------------------------------------------------
 # SPELERS
 # definitie van spelers, met verschillende strategieën
@@ -16,118 +15,60 @@ from chess_base_functions import (
 
 class random_player:
     def __init__(self, kleur, verbose=True):
-        self.strategy = """Always picks a random move from all available valid moves. 
-        When checked, picks a random move from all valid moves that resolve the threat."""
+        self.strategy = "Always picks a random move from all available valid moves. When checked, picks a random move from all valid moves that resolve the threat."
         self.kleur = kleur
         self.status = 1
         self.verbose = verbose
         self.name = "random player"
 
     def make_move(self, bord):
-        ch = check(bord, self.kleur)
+        zet_status, zetten = alle_geldige_zetten(bord, self.kleur)
 
-        if ch:
-            ch_mt, oplossingen = checkmate(bord, self.kleur)
-            if ch_mt:
-                if self.verbose:
-                    print(f"\n{self.kleur} staat schaakmat.")
-                self.status = 0
-            else:
-                zet = random.choice(oplossingen)
-                bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
+        if zet_status == 4:
+            if self.verbose:
+                print(f"\n{self.kleur} kan geen geldige zet meer uitvoeren.")
+            self.status = 0
+            return bord, self.status
+
+        elif zet_status == 3:
+            if self.verbose:
+                print(f"\n{self.kleur} staat schaakmat.")
+            self.status = 0
+            return bord, self.status
 
         else:
-            zetten = alle_geldige_zetten(bord, self.kleur)
-
-            if zetten:
-                zet = random.choice(zetten)
-                bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
-
-            else:
-                if self.verbose:
-                    print(f"\n{self.kleur} kan geen geldige zet meer uitvoeren.")
-                self.status = 0
-
-        return bord, self.status
+            zet = random.choice(zetten)
+            bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
+            return bord, self.status
 
 
 class score_player:
     def __init__(self, kleur, verbose=True):
-        self.strategy = """Always checks all available valid moves, and then chooses randomly among the subset of moves that
-        yields the highest score. Score is 1 if a pawn is captured, 2 for a knight, 3 for a rook or a bishop and 4 for the queen.
-        It is 2 when the opponent is checked, and 6 when he is checkmated.
-
-        If the player himself is checked, he picks a random move from all valid moves that resolve the threat."""
+        self.strategy = """Always checks all available valid moves, also when checked, and then chooses randomly among the subset of moves that yields the highest 
+        score. Score is 1 if a pawn is captured, 2 for a knight, 3 for a rook or a bishop and 4 for the queen. It is 2 when the opponent is checked, and 7 when he 
+        is checkmated or can't make any valid move for another reason."""
         self.kleur = kleur
         self.status = 1
         self.verbose = verbose
         self.name = "score player"
 
     def make_move(self, bord):
-        ch = check(bord, self.kleur)
+        zet_status, zetten = alle_geldige_zetten(bord, self.kleur)
 
-        if ch:
-            ch_mt, oplossingen = checkmate(bord, self.kleur)
-            if ch_mt:
-                if self.verbose:
-                    print(f"\n{self.kleur} staat schaakmat.")
-                self.status = 0
-            else:
-                zet = random.choice(oplossingen)
-                bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
-
-        else:
-            zetten_score = alle_geldige_zetten_score(bord, self.kleur)
-
-            if zetten_score:
-                m = max([item[2] for item in zetten_score])
-                beste_zetten = [item for item in zetten_score if item[2] == m]
-
-                zet = random.choice(beste_zetten)
-                bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
-
-            else:
-                if self.verbose:
-                    print(f"\n{self.kleur} kan geen geldige zet meer uitvoeren.")
-                self.status = 0
-
-        return bord, self.status
-
-
-class score_player_2:
-    def __init__(self, kleur, verbose=True):
-        self.strategy = """Always checks all available valid moves, also when checked, and then chooses randomly among the subset of moves that
-        yields the highest score. Score is 1 if a pawn is captured, 2 for a knight, 3 for a rook or a bishop and 4 for the queen.
-        It is 2 when the opponent is checked, and 6 when he is checkmated."""
-        self.kleur = kleur
-        self.status = 1
-        self.verbose = verbose
-        self.name = "score player version 2"
-
-    def make_move(self, bord):
-        zetten_score = alle_geldige_zetten_score(bord, self.kleur)
-
-        if not zetten_score:
+        if zet_status == 4:
             if self.verbose:
                 print(f"\n{self.kleur} kan geen geldige zet meer uitvoeren.")
             self.status = 0
+            return bord, self.status
+
+        elif zet_status == 3:
+            if self.verbose:
+                print(f"\n{self.kleur} staat schaakmat.")
+            self.status = 0
+            return bord, self.status
 
         else:
-            ch = check(bord, self.kleur)
-
-            if ch:
-                ch_mt, oplossingen = checkmate(bord, self.kleur)
-                if ch_mt:
-                    if self.verbose:
-                        print(f"\n{self.kleur} staat schaakmat.")
-                    self.status = 0
-                    return bord, self.status
-                else:
-                    zetten_score = [
-                        item
-                        for item in zetten_score
-                        if [item[0], item[1]] in oplossingen
-                    ]
+            zetten_score = alle_geldige_zetten_score(bord, self.kleur)
 
             m = max([item[2] for item in zetten_score])
             beste_zetten = [item for item in zetten_score if item[2] == m]
@@ -135,15 +76,15 @@ class score_player_2:
             zet = random.choice(beste_zetten)
             bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
 
-        return bord, self.status
+            return bord, self.status
 
 
 class thinking_one_ahead_player:
     def __init__(self, kleur, verbose=True):
         self.strategy = """Assumes that the OTHER player is a 'score player', meaning that all available valid moves are listed, 
         and subsequently a random choice is made among the subset of moves that yields the highest score. Score is 1 if a pawn is 
-        captured, 2 for a knight, 3 for a rook or a bishop, 4 for the queen, 2 when the move results in a check and 6 when it 
-        results in a checkmate.
+        captured, 2 for a knight, 3 for a rook or a bishop, 4 for the queen, 2 when the move results in a check and 7 when he 
+        is checkmated or can't make any valid move for another reason.
         
         The player himself lists all valid moves and, for each of them, determines (based upon the strategy explained in the previous
         paragraph) what the countermove will be. For each valid move the 'net score' is calculated: score own move minus score countermove.
@@ -157,127 +98,53 @@ class thinking_one_ahead_player:
         self.verbose = verbose
         self.name = "thinking 1 ahead player"
 
-    def make_move_old(self, bord):
-        ch = check(bord, self.kleur)
-
-        if ch:
-            ch_mt, oplossingen = checkmate(bord, self.kleur)
-            if ch_mt:
-                if self.verbose:
-                    print(f"\n{self.kleur} staat schaakmat.")
-                self.status = 0
-            else:
-                zet = random.choice(oplossingen)
-                bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
-
-        else:
-            zetten_score = alle_geldige_zetten_score(bord, self.kleur)
-
-            if zetten_score:
-                m = max([item[2] for item in zetten_score])
-                beste_zetten = [item for item in zetten_score if item[2] == m]
-
-                if m == 6:
-                    zet = random.choice(beste_zetten)
-                    bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
-
-                else:
-                    change_color_map = {"zwart": "wit", "wit": "zwart"}
-                    zetten_nettoscore = []
-
-                    for zet in zetten_score:
-                        bord_v = doe_zet(
-                            bord, self.kleur, zet[0], zet[1], controle=False
-                        )
-                        tegenzetten_score = alle_geldige_zetten_score(
-                            bord_v, change_color_map[self.kleur]
-                        )
-
-                        if tegenzetten_score:
-                            tegenscore = max([item[2] for item in tegenzetten_score])
-                        else:
-                            tegenscore = -7
-
-                        zetten_nettoscore.append([zet[0], zet[1], zet[2] - tegenscore])
-
-                    m_n = max([item[2] for item in zetten_nettoscore])
-                    beste_zetten = [
-                        [item[0], item[1]]
-                        for item in zetten_nettoscore
-                        if item[2] == m_n
-                    ]
-
-                    zet = random.choice(beste_zetten)
-                    bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
-
-            else:
-                if self.verbose:
-                    print(f"\n{self.kleur} kan geen geldige zet meer uitvoeren.")
-                self.status = 0
-
-        return bord, self.status
-
     def make_move(self, bord):
         zetten_score = alle_geldige_zetten_score(bord, self.kleur)
 
         if not zetten_score:
             if self.verbose:
-                print(f"\n{self.kleur} kan geen geldige zet meer uitvoeren.")
+                print(
+                    f"\n{self.kleur} staat schaakmat of kan om een andere reden geen geldige zet meer uitvoeren."
+                )
             self.status = 0
+            return bord, self.status
 
         else:
-            if check(bord, self.kleur):
-                ch_mt, oplossingen = checkmate(bord, self.kleur)
+            m = max([item[2] for item in zetten_score])
 
-                if ch_mt:
-                    if self.verbose:
-                        print(f"\n{self.kleur} staat schaakmat.")
-                        self.status = 0
-                        return bord, self.status
-                    else:
-                        zetten_score = [
-                            item
-                            for item in zetten_score
-                            if [item[0], item[1]] in oplossingen
-                        ]
-
-                m = max([item[2] for item in zetten_score])
+            if m == 7:
                 beste_zetten = [item for item in zetten_score if item[2] == m]
+                zet = random.choice(beste_zetten)
+                bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
 
-                if m == 6:
-                    zet = random.choice(beste_zetten)
-                    bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
+            else:
+                change_color_map = {"zwart": "wit", "wit": "zwart"}
+                zetten_nettoscore = []
 
-                else:
-                    change_color_map = {"zwart": "wit", "wit": "zwart"}
-                    zetten_nettoscore = []
+                for zet in zetten_score:
+                    bord_v = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
 
-                    for zet in zetten_score:
-                        bord_v = doe_zet(
-                            bord, self.kleur, zet[0], zet[1], controle=False
-                        )
-                        tegenzetten_score = alle_geldige_zetten_score(
-                            bord_v, change_color_map[self.kleur]
-                        )
+                    tegenzetten_score = alle_geldige_zetten_score(
+                        bord_v, change_color_map[self.kleur]
+                    )
 
-                        if tegenzetten_score:
-                            tegenscore = max([item[2] for item in tegenzetten_score])
-                        else:
-                            tegenscore = -7
+                    if tegenzetten_score:
+                        tegenscore = max([item[2] for item in tegenzetten_score])
+                    else:
+                        tegenscore = -7
 
-                        zetten_nettoscore.append([zet[0], zet[1], zet[2] - tegenscore])
+                    zetten_nettoscore.append([zet[0], zet[1], zet[2] - tegenscore])
 
-                    m_n = max([item[2] for item in zetten_nettoscore])
-                    beste_zetten = [
-                        [item[0], item[1]]
-                        for item in zetten_nettoscore
-                        if item[2] == m_n
-                    ]
+                m_n = max([item[2] for item in zetten_nettoscore])
 
-                    zet = random.choice(beste_zetten)
-                    bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
+                beste_zetten = [
+                    [item[0], item[1]] for item in zetten_nettoscore if item[2] == m_n
+                ]
 
-        return bord, self.status
+                zet = random.choice(beste_zetten)
+                bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
+
+            return bord, self.status
 
 
 class thinking_two_ahead_player_conservative:
@@ -307,29 +174,16 @@ class thinking_two_ahead_player_conservative:
 
         if not primaire_zetten_score:
             if self.verbose:
-                print(f"\n{self.kleur} kan geen geldige zet meer uitvoeren.")
+                print(
+                    f"\n{self.kleur} staat schaakmat of kan om een andere reden geen geldige zet meer uitvoeren."
+                )
             self.status = 0
+            return bord, self.status
 
         else:
-            ch = check(bord, self.kleur)
-
-            if ch:
-                ch_mt, oplossingen = checkmate(bord, self.kleur)
-                if ch_mt:
-                    if self.verbose:
-                        print(f"\n{self.kleur} staat schaakmat.")
-                    self.status = 0
-                    return bord, self.status
-                else:
-                    primaire_zetten_score = [
-                        item
-                        for item in primaire_zetten_score
-                        if [item[0], item[1]] in oplossingen
-                    ]
-
             primair_max = max([item[2] for item in primaire_zetten_score])
 
-            if primair_max == 6:
+            if primair_max == 7:
                 beste_zetten = [
                     item for item in primaire_zetten_score if item[2] == primair_max
                 ]
@@ -339,7 +193,6 @@ class thinking_two_ahead_player_conservative:
                 # 2 - Determine all countermoves and secondary moves with their scores
 
                 change_color_map = {"zwart": "wit", "wit": "zwart"}
-                z_ult = []
 
                 for z in primaire_zetten_score:
                     bord_o = doe_zet(bord, self.kleur, z[0], z[1], controle=False)
@@ -347,7 +200,7 @@ class thinking_two_ahead_player_conservative:
                         bord_o, change_color_map[self.kleur]
                     )
 
-                    if zetten_score_o:
+                    if zetten_score_o:  # Normaal gezien zijn er sowieso zetten, anders was primair_max = 7, dus in principe is deze check overbodig
                         for z_o in zetten_score_o:
                             bord_p = doe_zet(
                                 bord_o,
@@ -371,23 +224,13 @@ class thinking_two_ahead_player_conservative:
 
                         z.append(min([item[3] for item in zetten_score_o]))
 
-                    else:
-                        z_ult = z
-                        break
+                m = max([item[3] for item in primaire_zetten_score])
 
-                if not z_ult:
-                    m = max([item[3] for item in primaire_zetten_score])
-                    beste_zetten = [
-                        [item[0], item[1]]
-                        for item in primaire_zetten_score
-                        if item[3] == m
-                    ]
+                beste_zetten = [
+                    [item[0], item[1]] for item in primaire_zetten_score if item[3] == m
+                ]
 
-                    zet = random.choice(beste_zetten)
-
-                else:
-                    zet = z_ult
+                zet = random.choice(beste_zetten)
 
             bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
-
-        return bord, self.status
+            return bord, self.status
