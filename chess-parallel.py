@@ -1,4 +1,3 @@
-import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
 
@@ -10,9 +9,9 @@ from chess_players import (
     thinking_two_ahead_player_conservative,
 )
 
-speler_1 = score_player
+speler_1 = thinking_two_ahead_player_conservative
 speler_2 = thinking_one_ahead_player
-N_games = 10_000
+N_games = 1_000
 workers = 12
 max_zetten = 300
 

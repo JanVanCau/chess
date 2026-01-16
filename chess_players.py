@@ -234,3 +234,109 @@ class thinking_two_ahead_player_conservative:
 
             bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
             return bord, self.status
+
+
+class thinking_three_ahead_player_conservative:
+    def __init__(self, kleur, verbose=True):
+        self.strategy = """Assumes nothing about the OTHER player.
+        
+        The player himself lists all valid moves. If the player himself is checked, only the valid primary moves (= moves that resolve the threat) are investigated. 
+        
+        For each valid primary move, all possible countermoves are determined with their scores for the opponent. For each countermove the highest scoring secondary move 
+        is calculated and its corresponding tertiary move (the last one based on the 'score player' logic). The corresponding net score for the countermove + tertiary move 
+        is stored. 
+
+        In this way, for each primary move, the lowest net score can be determined across all possible countermoves. This is a conservative approach. 
+        
+        Subsequently, the primary move that has the highest 'lowest net score' is then chosen.
+
+        When a move results in a checkmate of the opponent or another situation in which the opponent has zero possible moves left, that move is chosen (no countermove has to be determined). 
+        
+        """
+        self.kleur = kleur
+        self.status = 1
+        self.verbose = verbose
+        self.name = "conservative thinking 3 ahead player"
+
+    def make_move(self, bord):
+        # 1 - Determine primary moves with their scores
+
+        primaire_zetten_score = alle_geldige_zetten_score(bord, self.kleur)
+
+        if not primaire_zetten_score:
+            if self.verbose:
+                print(
+                    f"\n{self.kleur} staat schaakmat of kan om een andere reden geen geldige zet meer uitvoeren."
+                )
+            self.status = 0
+            return bord, self.status
+
+        else:
+            primair_max = max([item[2] for item in primaire_zetten_score])
+
+            if primair_max == 7:
+                beste_zetten = [
+                    item for item in primaire_zetten_score if item[2] == primair_max
+                ]
+                zet = random.choice(beste_zetten)
+
+            else:
+                # 2 - Determine all countermoves and secondary moves with their scores
+
+                change_color_map = {"zwart": "wit", "wit": "zwart"}
+
+                for zet in primaire_zetten_score:
+                    bord_1 = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
+                    zetten_score_1 = alle_geldige_zetten_score(
+                        bord_1, change_color_map[self.kleur]
+                    )
+
+                    if zetten_score_1:  # Normaal gezien zijn er sowieso zetten, anders was primair_max = 7, dus in principe is deze check overbodig
+                        for zet_1 in zetten_score_1:
+                            bord_2 = doe_zet(
+                                bord_1,
+                                change_color_map[self.kleur],
+                                zet_1[0],
+                                zet_1[1],
+                                controle=False,
+                            )
+
+                            secundaire_zetten_score = alle_geldige_zetten_score(
+                                bord_2, self.kleur
+                            )
+
+                            if not secundaire_zetten_score:
+                                zet_1.append(-20)
+                            else:
+                                sub_player = thinking_one_ahead_player(
+                                    self.kleur, verbose=False
+                                )
+                                for zet_2 in secundaire_zetten_score:
+                                    bord_3 = doe_zet(
+                                        bord_2,
+                                        self.kleur,
+                                        zet_2[0],
+                                        zet_2[1],
+                                        controle=False,
+                                    )
+                                    zetten_score_3 = alle_geldige_zetten_score(
+                                        bord_3, change_color_map[self.kleur]
+                                    )
+                                z_o.append(
+                                    z[2]
+                                    - z_o[2]
+                                    + max([item[2] for item in secundaire_zetten_score])
+                                )
+
+                        z.append(min([item[3] for item in zetten_score_o]))
+
+                m = max([item[3] for item in primaire_zetten_score])
+
+                beste_zetten = [
+                    [item[0], item[1]] for item in primaire_zetten_score if item[3] == m
+                ]
+
+                zet = random.choice(beste_zetten)
+
+            bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
+            return bord, self.status
