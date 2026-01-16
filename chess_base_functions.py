@@ -531,20 +531,17 @@ def alle_geldige_zetten_score(bord, kleur):
         for zet in geldige_zetten:
             bord_v = doe_zet(bord, kleur, zet[0], zet[1], controle=False)
 
-            status_v, geldige_zetten_v = alle_geldige_zetten(
-                bord_v, change_color_map[kleur]
-            )
+            check_v_other = check(bord_v, change_color_map[kleur])
 
-            if status_v in [3, 4]:
-                geldige_zetten_score.append(
-                    [zet[0], zet[1], 7]
-                )  # andere speler schaakmat of kan omwille van een andere reden geen geldige zet meer uitvoeren
+            if check_v_other:
+                ch_mt, oplossingen = checkmate(bord_v, change_color_map[kleur])
 
-            elif status_v == 2:
-                score = 2 + score_map[bord[zet[1][0]][zet[1][1]][1]]
-                geldige_zetten_score.append(
-                    [zet[0], zet[1], score]
-                )  # andere speler staat schaak
+                if ch_mt:
+                    geldige_zetten_score.append([zet[0], zet[1], 7])  # schaakmat
+                    break
+                else:
+                    score = 2 + score_map[bord[zet[1][0]][zet[1][1]][1]]
+                    geldige_zetten_score.append([zet[0], zet[1], score])  # schaak
 
             else:
                 score = score_map[bord[zet[1][0]][zet[1][1]][1]]
