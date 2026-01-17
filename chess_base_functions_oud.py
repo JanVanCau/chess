@@ -436,7 +436,7 @@ def checkmate(bord, kleur):
         return False, []
 
     else:
-        status, zetten = alle_geldige_zetten(bord, kleur)
+        zetten = alle_geldige_zetten(bord, kleur)
         oplossingen = []
 
         for z in zetten:
@@ -464,7 +464,7 @@ def alle_geldige_zetten(bord, kleur):
                 for zet in zetten:
                     bord_v = doe_zet(bord, kleur, [i, j], zet, controle=False)
                     check_v = check(bord_v, kleur)
-                    if not check_v:  # Je mag jezelf niet schaak zetten
+                    if not check_v:
                         geldige_zetten.append([[i, j], zet])
 
                 if bord[i][j][1] == "koning" and geldige_zetten_koning_rokade(
@@ -486,68 +486,36 @@ def alle_geldige_zetten(bord, kleur):
                         if not ch and not ch_v and not ch_v2:
                             geldige_zetten.append([[i, j], zet])
 
-    if not geldige_zetten:
-        status = 4
-        return status, []
-
-    elif check(bord, kleur):
-        geldige_zetten_bis = []
-
-        for zet in geldige_zetten:
-            bord_v = doe_zet(bord, kleur, zet[0], zet[1], controle=False)
-            bedr_v = check(bord_v, kleur)
-            if not bedr_v:
-                geldige_zetten_bis.append(zet)
-
-        if not geldige_zetten_bis:
-            status = 3
-            return status, []
-
-        else:
-            status = 2
-            return status, geldige_zetten_bis
-
-    else:
-        status = 1
-        return status, geldige_zetten
-
-    # status 1 -> all good
-    # status 2 -> checked
-    # status 3 -> checkmate
-    # state 4 -> not checked but no moves possible
+    return geldige_zetten
 
 
 def alle_geldige_zetten_score(bord, kleur):
     score_map = {0: 0, "pion": 1, "paard": 2, "toren": 3, "loper": 3, "koningin": 4}
     change_color_map = {"zwart": "wit", "wit": "zwart"}
 
-    status, geldige_zetten = alle_geldige_zetten(bord, kleur)
+    geldige_zetten = alle_geldige_zetten(bord, kleur)
+    geldige_zetten_score = []
 
-    if status in [3, 4]:
-        return []
+    for zet in geldige_zetten:
+        bord_v = doe_zet(bord, kleur, zet[0], zet[1], controle=False)
 
-    else:
-        geldige_zetten_score = []
-        for zet in geldige_zetten:
-            bord_v = doe_zet(bord, kleur, zet[0], zet[1], controle=False)
+        check_v_other = check(bord_v, change_color_map[kleur])
 
-            check_v_other = check(bord_v, change_color_map[kleur])
+        if check_v_other:
+            ch_mt, oplossingen = checkmate(bord_v, change_color_map[kleur])
 
-            if check_v_other:
-                ch_mt, oplossingen = checkmate(bord_v, change_color_map[kleur])
-
-                if ch_mt:
-                    geldige_zetten_score.append([zet[0], zet[1], 7])  # schaakmat
-                    break
-                else:
-                    score = 2 + score_map[bord[zet[1][0]][zet[1][1]][1]]
-                    geldige_zetten_score.append([zet[0], zet[1], score])  # schaak
-
+            if ch_mt:
+                geldige_zetten_score.append([zet[0], zet[1], 7])  # schaakmat
+                break
             else:
-                score = score_map[bord[zet[1][0]][zet[1][1]][1]]
-                geldige_zetten_score.append([zet[0], zet[1], score])
+                score = 2 + score_map[bord[zet[1][0]][zet[1][1]][1]]
+                geldige_zetten_score.append([zet[0], zet[1], score])  # schaak
 
-        return geldige_zetten_score
+        else:
+            score = score_map[bord[zet[1][0]][zet[1][1]][1]]
+            geldige_zetten_score.append([zet[0], zet[1], score])
+
+    return geldige_zetten_score
 
 
 # ----------------------------------------------------------------------------
@@ -569,7 +537,7 @@ def doe_zet(bord, kleur, van, naar, controle=True):
     color_map_inv = {"wit": 3, "zwart": 1}
 
     if controle:
-        status, geldige_zetten = alle_geldige_zetten(bord, kleur)
+        geldige_zetten = alle_geldige_zetten(bord, kleur)
         if [van, naar] not in geldige_zetten:
             print("Ongeldige zet!")
             return bord
@@ -629,14 +597,14 @@ def spel(player_white, player_black, aantal_zetten, verbose=True, toon=True):
     # bord_replays = [bord]
 
     for i in range(aantal_zetten):
-        bord, status_white, score = player_white.make_move(bord)
+        bord, status_white = player_white.make_move(bord)
 
         if status_white == 0:
             if verbose:
                 print(f"\n{i + 1} zetten gespeeld.")
             break
 
-        bord, status_black, score = player_black.make_move(bord)
+        bord, status_black = player_black.make_move(bord)
 
         if status_black == 0:
             if verbose:
@@ -693,8 +661,8 @@ def N_games(player_1, player_2, N, max_zetten):
             else:
                 onbeslist += 1
 
-        # if (i + 1) % 50 == 0:
-        print(f"{round(100 * (i + 1) / N, 2)} % done.")
+        if (i + 1) % 50 == 0:
+            print(f"{round(100 * (i + 1) / N, 2)} % done.")
 
     stop = time.time()
     print(f"\nThis took {round(stop - start, 2)} seconds.")
