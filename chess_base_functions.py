@@ -436,7 +436,7 @@ def checkmate(bord, kleur):
         return False, []
 
     else:
-        status, zetten = alle_geldige_zetten(bord, kleur)
+        zetten = alle_geldige_zetten(bord, kleur)
         oplossingen = []
 
         for z in zetten:
@@ -486,44 +486,50 @@ def alle_geldige_zetten(bord, kleur):
                         if not ch and not ch_v and not ch_v2:
                             geldige_zetten.append([[i, j], zet])
 
-    if not geldige_zetten:
-        status = 4
-        return status, []
+    # if not geldige_zetten:
+    #     status = 4
+    #     return status, []
 
-    elif check(bord, kleur):
-        geldige_zetten_bis = []
+    # elif check(bord, kleur):
+    #     geldige_zetten_bis = []
 
-        for zet in geldige_zetten:
-            bord_v = doe_zet(bord, kleur, zet[0], zet[1], controle=False)
-            bedr_v = check(bord_v, kleur)
-            if not bedr_v:
-                geldige_zetten_bis.append(zet)
+    #     for zet in geldige_zetten:
+    #         bord_v = doe_zet(bord, kleur, zet[0], zet[1], controle=False)
+    #         bedr_v = check(bord_v, kleur)
+    #         if not bedr_v:
+    #             geldige_zetten_bis.append(zet)
 
-        if not geldige_zetten_bis:
-            status = 3
-            return status, []
+    #     if not geldige_zetten_bis:
+    #         status = 3
+    #         return status, []
 
-        else:
-            status = 2
-            return status, geldige_zetten_bis
+    #     else:
+    #         status = 2
+    #         return status, geldige_zetten_bis
 
-    else:
-        status = 1
-        return status, geldige_zetten
+    # else:
+    #     status = 1
+    #     return status, geldige_zetten
 
     # status 1 -> all good
     # status 2 -> checked
     # status 3 -> checkmate
-    # state 4 -> not checked but no moves possible
+    # status 4 -> not checked but no moves possible
+
+    return geldige_zetten
 
 
 def alle_geldige_zetten_score(bord, kleur):
     score_map = {0: 0, "pion": 1, "paard": 2, "toren": 3, "loper": 3, "koningin": 4}
     change_color_map = {"zwart": "wit", "wit": "zwart"}
 
-    status, geldige_zetten = alle_geldige_zetten(bord, kleur)
+    # status, geldige_zetten = alle_geldige_zetten(bord, kleur)
+    geldige_zetten = alle_geldige_zetten(bord, kleur)
 
-    if status in [3, 4]:
+    # if status in [3, 4]:
+    # return []
+
+    if not geldige_zetten:
         return []
 
     else:

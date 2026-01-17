@@ -1,4 +1,5 @@
 import random
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from chess_base_functions import (
     alle_geldige_zetten,
     alle_geldige_zetten_score,
@@ -22,17 +23,26 @@ class random_player:
         self.name = "random player"
 
     def make_move(self, bord):
-        zet_status, zetten = alle_geldige_zetten(bord, self.kleur)
+        # zet_status, zetten = alle_geldige_zetten(bord, self.kleur)
+        zetten = alle_geldige_zetten(bord, self.kleur)
 
-        if zet_status == 4:
-            if self.verbose:
-                print(f"\n{self.kleur} kan geen geldige zet meer uitvoeren.")
-            self.status = 0
-            return bord, self.status, 0
+        # if zet_status == 4:
+        #     if self.verbose:
+        #         print(f"\n{self.kleur} kan geen geldige zet meer uitvoeren.")
+        #     self.status = 0
+        #     return bord, self.status, 0
 
-        elif zet_status == 3:
+        # elif zet_status == 3:
+        #     if self.verbose:
+        #         print(f"\n{self.kleur} staat schaakmat.")
+        #     self.status = 0
+        #     return bord, self.status, 0
+
+        if not zetten:
             if self.verbose:
-                print(f"\n{self.kleur} staat schaakmat.")
+                print(
+                    f"\n{self.kleur} staat schaakmakt of kan om een andere reden geen geldige zet meer uitvoeren."
+                )
             self.status = 0
             return bord, self.status, 0
 
@@ -53,19 +63,28 @@ class score_player:
         self.name = "score player"
 
     def make_move(self, bord):
-        zet_status, zetten = alle_geldige_zetten(bord, self.kleur)
+        # zet_status, zetten = alle_geldige_zetten(bord, self.kleur)
+        zetten = alle_geldige_zetten(bord, self.kleur)
 
-        if zet_status == 4:
-            if self.verbose:
-                print(f"\n{self.kleur} kan geen geldige zet meer uitvoeren.")
-            self.status = 0
-            return bord, self.status, -5
+        # if zet_status == 4:
+        #     if self.verbose:
+        #         print(f"\n{self.kleur} kan geen geldige zet meer uitvoeren.")
+        #     self.status = 0
+        #     return bord, self.status, -5
 
-        elif zet_status == 3:
+        # elif zet_status == 3:
+        #     if self.verbose:
+        #         print(f"\n{self.kleur} staat schaakmat.")
+        #     self.status = 0
+        #     return bord, self.status, -5
+
+        if not zetten:
             if self.verbose:
-                print(f"\n{self.kleur} staat schaakmat.")
+                print(
+                    f"\n{self.kleur} staat schaakmakt of kan om een andere reden geen geldige zet meer uitvoeren."
+                )
             self.status = 0
-            return bord, self.status, -5
+            return bord, self.status, 0
 
         else:
             zetten_score = alle_geldige_zetten_score(bord, self.kleur)
@@ -345,80 +364,23 @@ class thinking_three_ahead_player_conservative:
                 bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
                 return bord, self.status, max_cons
 
-    # def make_move(self, bord):
-    #     # 1 - Determine primary moves with their scores
 
-    #     primaire_zetten_score = alle_geldige_zetten_score(bord, self.kleur)
+def evaluate_countermove(bord_2, kleur, zet_0_score, zet_1):
+    """Evaluate a single countermove and return its net score."""
 
-    #     if not primaire_zetten_score:
-    #         if self.verbose:
-    #             print(
-    #                 f"\n{self.kleur} staat schaakmat of kan om een andere reden geen geldige zet meer uitvoeren."
-    #             )
-    #         self.status = 0
-    #         return bord, self.status, -5
+    zetten_2_score = alle_geldige_zetten_score(bord_2, kleur)
 
-    #     else:
-    #         primair_max = max([item[2] for item in primaire_zetten_score])
-
-    #         if primair_max == 7:
-    #             beste_zetten = [
-    #                 item for item in primaire_zetten_score if item[2] == primair_max
-    #             ]
-    #             zet = random.choice(beste_zetten)
-    #             bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
-    #             return bord, self.status, 7
-
-    #         else:
-    #             # 2 - Determine all countermoves and secondary moves with their scores
-
-    #             change_color_map = {"zwart": "wit", "wit": "zwart"}
-
-    #             for zet in primaire_zetten_score:
-    #                 bord_1 = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
-    #                 zetten_score_1 = alle_geldige_zetten_score(
-    #                     bord_1, change_color_map[self.kleur]
-    #                 )
-
-    #                 if zetten_score_1:  # Normaal gezien zijn er sowieso zetten, anders was primair_max = 7, dus in principe is deze check overbodig
-    #                     for zet_1 in zetten_score_1:
-    #                         bord_2 = doe_zet(
-    #                             bord_1,
-    #                             change_color_map[self.kleur],
-    #                             zet_1[0],
-    #                             zet_1[1],
-    #                             controle=False,
-    #                         )
-
-    #                         secundaire_zetten_score = alle_geldige_zetten_score(
-    #                             bord_2, self.kleur
-    #                         )
-
-    #                         if not secundaire_zetten_score:
-    #                             zet_1.append(-20)
-    #                         else:
-    #                             sub_player = thinking_one_ahead_player(
-    #                                 self.kleur, verbose=False
-    #                             )
-    #                             bord_3, zet_status, score = sub_player.make_move(bord_2)
-    #                             zet_1.append(zet[2] - zet_1[2] + score)
-
-    #                     zet.append(min([item[3] for item in zetten_score_1]))
-
-    #             m = max([item[3] for item in primaire_zetten_score])
-
-    #             beste_zetten = [
-    #                 [item[0], item[1]] for item in primaire_zetten_score if item[3] == m
-    #             ]
-
-    #             zet = random.choice(beste_zetten)
-
-    #             bord = doe_zet(bord, self.kleur, zet[0], zet[1], controle=False)
-    #             return bord, self.status, m
+    if not zetten_2_score:
+        return (zet_1[0], zet_1[1], zet_1[2], -20)
+    else:
+        sub_player = thinking_two_ahead_player_conservative(kleur, verbose=False)
+        bord_3, zet_status, score_2 = sub_player.make_move(bord_2)
+        net_score = zet_0_score - zet_1[2] + score_2
+        return (zet_1[0], zet_1[1], zet_1[2], net_score)
 
 
 class thinking_four_ahead_player_conservative:
-    def __init__(self, kleur, verbose=True):
+    def __init__(self, kleur, verbose=True, workers=4):
         self.strategy = """Assumes nothing about the OTHER player.
         
         The player himself lists all valid moves. If the player himself is checked, only the valid primary moves (= moves that resolve the threat) are investigated. 
@@ -437,6 +399,7 @@ class thinking_four_ahead_player_conservative:
         self.status = 1
         self.verbose = verbose
         self.name = "conservative thinking 3 ahead player"
+        self.executor = ProcessPoolExecutor(max_workers=workers)
 
     def make_move(self, bord):
         # 1 - Determine primary moves with their scores

@@ -661,8 +661,8 @@ def N_games(player_1, player_2, N, max_zetten):
             else:
                 onbeslist += 1
 
-        if (i + 1) % 50 == 0:
-            print(f"{round(100 * (i + 1) / N, 2)} % done.")
+        # if (i + 1) % 50 == 0:
+        print(f"{round(100 * (i + 1) / N, 2)} % done.")
 
     stop = time.time()
     print(f"\nThis took {round(stop - start, 2)} seconds.")

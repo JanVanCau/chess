@@ -7,11 +7,13 @@ from chess_players import (
     score_player,
     thinking_one_ahead_player,
     thinking_two_ahead_player_conservative,
+    thinking_three_ahead_player_conservative,
+    thinking_four_ahead_player_conservative,
 )
 
-speler_1 = thinking_one_ahead_player
+speler_1 = thinking_four_ahead_player_conservative
 speler_2 = thinking_two_ahead_player_conservative
-N_games = 200
+N_games = 20
 workers = 12
 max_zetten = 300
 
